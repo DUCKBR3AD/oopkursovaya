@@ -181,3 +181,39 @@ html_template = """
 </body>
 </html>
 """
+
+@app.route('/')
+def index():
+    return render_template_string(html_template, materials=materials, furniture_types=furniture_types)
+
+@app.route('/calculate', methods=['POST'])
+def calculate():
+    items = []
+    materials_form = request.form.getlist("material[]")
+    furniture_types_form = request.form.getlist("furniture_type[]")
+    quantities_form = request.form.getlist("quantity[]")
+    
+    for material, furniture_type, quantity in zip(materials_form, furniture_types_form, quantities_form):
+        items.append({
+            "material": material,
+            "furniture_type": furniture_type,
+            "quantity": int(quantity)
+        })
+    
+    total_cost, detailed_items = calculate_total_cost(items)
+    discounted_cost = None
+    if total_cost >= 20000:
+        discounted_cost = round(total_cost * 0.85)
+    
+    return render_template_string(
+        html_template,
+        materials=materials,
+        furniture_types=furniture_types,
+        total_cost=total_cost,
+        discounted_cost=discounted_cost,
+        detailed_items=detailed_items
+    )
+
+if __name__ == "__main__":
+    app.run(debug=True)
+
